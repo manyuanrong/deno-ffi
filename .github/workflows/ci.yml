@@ -1,0 +1,82 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-2019, ubuntu-latest]
+
+    steps:
+      - name: Setup Environment
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+          echo ::set-env name=GH_ACTIONS::1
+          echo ::set-env name=RUST_BACKTRACE::full
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Install rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: 1.46.0
+
+      - name: Install clippy and rustfmt
+        run: |
+          rustup component add clippy
+          rustup component add rustfmt
+
+      - name: Install Deno
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: 1.x.x
+
+      - name: Log versions
+        run: |
+          deno --version
+          rustc --version
+          cargo --version
+
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-
+
+      # Lint
+      - name: Clippy
+        run: cargo clippy --all-targets --release --locked -- -D clippy::all
+      - name: Format Rust
+        run: cargo fmt -- --check
+      - name: Format TS
+        run: deno fmt --check
+
+      # Build
+      - name: Build
+        run: cargo build --release --locked --all-targets
+
+      # Tests
+      - name: Test Rust
+        run: cargo test --release --locked --all-targets
+      - name: Test TS
+        run: deno test -A --unstable
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            target/release/libdeno_ffi.dylib
+            target/release/libdeno_ffi.so
+            target/release/deno_ffi.dll
