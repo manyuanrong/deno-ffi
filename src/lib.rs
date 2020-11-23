@@ -2,10 +2,7 @@ extern crate deno_core;
 extern crate dlopen;
 
 use deno_core::plugin_api::{Interface, Op, ZeroCopyBuf};
-use deno_core::{
-    serde_json,
-    serde_json::{json, Value},
-};
+use deno_core::{serde_json, serde_json::Value};
 use dlopen::raw::Library;
 use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap};
@@ -17,7 +14,7 @@ thread_local! {
 
 #[derive(Deserialize, Debug)]
 enum DataType {
-    C_INT,
+    CInt,
 }
 
 #[derive(Deserialize, Debug)]

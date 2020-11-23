@@ -9,6 +9,15 @@ await buildTestLib();
 
 const { test } = Deno;
 setPluginUrl("file://target/release");
+let testLibPath = "";
+
+if (Deno.build.os === "windows") {
+  testLibPath = "./tests/target/release/tests.dll";
+} else if (Deno.build.os === "linux") {
+  testLibPath = "./tests/target/release/libtests.so";
+} else {
+  testLibPath = "./tests/target/release/libtests.dylib";
+}
 
 if (await exists(".deno_plugins")) {
   await Deno.remove(".deno_plugins", { recursive: true });
@@ -17,7 +26,7 @@ if (await exists(".deno_plugins")) {
 test("testOpen", async () => {
   const lib = await loadLibrary<{
     rust_fun_print_something(): void;
-  }>("./tests/target/release/libtests.dylib", [
+  }>(testLibPath, [
     {
       name: "rust_fun_print_something",
       type: "function",
