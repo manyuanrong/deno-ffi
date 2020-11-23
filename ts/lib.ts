@@ -17,23 +17,11 @@ enum DataType {
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   await initPlugin();
-  const test = dispatch(FFI_OPS.DENO_FFI_OPEN, encodeString(file));
-  console.log(test);
+  // const test = dispatch(FFI_OPS.DENO_FFI_OPEN, encodeString(file));
+  // console.log(test);
   const apis: { [key: string]: any } = {};
   define.forEach((def) => {
     apis[def.name] = () => undefined;
   });
   return apis as T;
 }
-
-// const lib = await loadLibrary<{
-//   add(num1: number): number;
-// }>("test", [
-//   {
-//     name: "add",
-//     type: "function",
-//     params: [DataType.C_INT],
-//   },
-// ]);
-
-// lib.add(3);

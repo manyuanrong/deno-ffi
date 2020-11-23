@@ -10,7 +10,7 @@ export const DenoCore = Deno.core as {
   ): Uint8Array | undefined;
 };
 
-const PLUGIN_NAME = "deno-ffi";
+const PLUGIN_NAME = "deno_ffi";
 let initialized = false;
 let pluginUrl = "";
 const encoder = new TextEncoder();

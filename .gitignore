@@ -14,3 +14,5 @@ Cargo.lock
 
 /target
 tests/target/
+tests/.deno_plugins/
+.deno_plugins/
