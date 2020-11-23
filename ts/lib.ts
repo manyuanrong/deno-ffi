@@ -16,7 +16,6 @@ enum DataType {
 }
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
-  const test = DenoCore.dispatch(ffiOps.DENO_FFI_OPEN, file);
   await initPlugin();
   const test = dispatch(FFI_OPS.DENO_FFI_OPEN, encodeString(file));
   console.log(test);
@@ -27,17 +26,6 @@ export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   return apis as T;
 }
 
-const lib = await loadLibrary<{
-  add(num1: number): number;
-}>("test", [
-  {
-    name: "add",
-    type: "function",
-    params: [DataType.INT],
-  },
-]);
-
-lib.add(3);
 // const lib = await loadLibrary<{
 //   add(num1: number): number;
 // }>("test", [
