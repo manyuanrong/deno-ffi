@@ -32,8 +32,8 @@ function call(id: number, define: ApiDefine, params: any[]) {
           };
         }),
         return_type: define.returnType,
-      })
-    )
+      }),
+    ),
   );
   console.log(buffer);
 }
