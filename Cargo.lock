@@ -37,6 +37,7 @@ dependencies = [
  "deno_core",
  "dlopen",
  "lazy_static",
+ "libc",
  "serde",
 ]
 

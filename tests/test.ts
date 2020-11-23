@@ -1,13 +1,12 @@
-import { initPlugin, loadLibrary } from "../mod.ts";
+import { loadLibrary } from "../mod.ts";
+import { DataType } from "../ts/lib.ts";
+import { setPluginUrl } from "../ts/util.ts";
 import { buildPlugin, buildTestLib } from "./build.ts";
 import { exists } from "./test.deps.ts";
-
-import { closePlugin, setPluginUrl } from "../ts/util.ts";
 
 await buildPlugin();
 await buildTestLib();
 
-const { test } = Deno;
 setPluginUrl("file://target/release");
 let testLibPath = "";
 
@@ -23,17 +22,34 @@ if (await exists(".deno_plugins")) {
   await Deno.remove(".deno_plugins", { recursive: true });
 }
 
-test("testOpen", async () => {
-  const lib = await loadLibrary<{
-    rust_fun_print_something(): void;
-  }>(testLibPath, [
-    {
-      name: "rust_fun_print_something",
-      type: "function",
-    },
-  ]);
+interface LibApi {
+  rust_fun_print_something(): void;
+  rust_fun_add_one(num: number): number;
+}
 
-  lib.api.rust_fun_print_something();
+const lib = await loadLibrary<LibApi>(testLibPath, [
+  {
+    name: "rust_fun_print_something",
+    type: "function",
+  },
+  {
+    name: "rust_fun_add_one",
+    type: "function",
+    params: [DataType.i32],
+    returnType: DataType.i32,
+  },
+]);
 
-  closePlugin();
+async function test(name: string, fn: (lib: LibApi) => void) {
+  Deno.test(name, async () => {
+    fn(lib.api);
+  });
+}
+
+test("rust_fun_print_something", (lib) => {
+  lib.rust_fun_print_something();
+});
+
+test("rust_fun_add_one", (lib) => {
+  lib.rust_fun_add_one(1);
 });

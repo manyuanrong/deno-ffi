@@ -4,6 +4,7 @@ extern crate dlopen;
 use deno_core::plugin_api::{Interface, Op, ZeroCopyBuf};
 use deno_core::{serde_json, serde_json::Value};
 use dlopen::raw::Library;
+use libc::c_int;
 use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap};
 
@@ -12,9 +13,11 @@ thread_local! {
     static LIBS_MAP: RefCell<HashMap<u32, Library>> = RefCell::new(HashMap::new());
 }
 
+type RP = *mut ();
+
 #[derive(Deserialize, Debug)]
 enum DataType {
-    CInt,
+    I32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -27,7 +30,7 @@ struct CallParam {
 pub struct CallArgs {
     id: u32,
     name: String,
-    return_type: Option<String>,
+    return_type: Option<DataType>,
     params: Option<Vec<CallParam>>,
 }
 
@@ -54,12 +57,56 @@ fn op_open(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
 fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op {
     let json_bytes = zero_copy.get(0).unwrap();
     let args: CallArgs = serde_json::from_slice(json_bytes).unwrap();
-    LIBS_MAP.with(|cell| {
+    let result: Vec<u8> = LIBS_MAP.with(|cell| {
         let libs = cell.borrow();
         let lib = libs.get(&args.id).unwrap();
-        let api: fn() = unsafe { lib.symbol(&args.name) }.unwrap();
-        api();
+        let return_value;
+        match &args.params {
+            None => {
+                let api: fn() -> *mut () = unsafe { lib.symbol(&args.name) }.unwrap();
+                return_value = api();
+            }
+            Some(params) => match params.len() {
+                1 => {
+                    let api: fn(RP) -> RP = unsafe { lib.symbol(&args.name) }.unwrap();
+                    return_value = api(get_param(params, 0));
+                    let a: i32 = return_value as i32;
+                    println!("{:?}", a);
+                    // result
+                }
+                _ => panic!("Not supported"),
+            },
+        }
+        if let Some(return_type) = args.return_type {
+            let value = convert_return_value(return_value, &return_type);
+            value.to_string().as_bytes().to_vec()
+        } else {
+            vec![]
+        }
     });
-    println!("{:?}", args);
-    Op::Sync(Box::new([0]))
+    Op::Sync(result.into_boxed_slice())
+}
+
+fn get_param(params: &Vec<CallParam>, index: usize) -> RP {
+    let param = params.get(index);
+    match param {
+        None => 0 as *mut (),
+        Some(param) => match &param.value {
+            Some(value) => convert_data_type(value, &param.data_type),
+            None => 0 as *mut (),
+        },
+    }
+}
+
+fn convert_data_type(value: &Value, data_type: &DataType) -> RP {
+    match data_type {
+        DataType::I32 => {
+            let v: i32 = value.as_i64().unwrap() as i32;
+            v as *mut ()
+        }
+    }
+}
+
+fn convert_return_value(raw: *mut (), data_type: &DataType) -> Value {
+    Value::Null
 }

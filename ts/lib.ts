@@ -11,11 +11,9 @@ interface ApiDefine {
   returnType?: DataType;
 }
 
-enum DataType {
-  INT = "INT",
-  C_INT = "INT",
-  DOUBLE = "DOUBLE",
-  C_STRING = "C_STRING",
+export enum DataType {
+  i32 = "I32",
+  i64 = "I64",
 }
 
 function call(id: number, define: ApiDefine, params: any[]) {
@@ -35,7 +33,6 @@ function call(id: number, define: ApiDefine, params: any[]) {
       }),
     ),
   );
-  console.log(buffer);
 }
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
