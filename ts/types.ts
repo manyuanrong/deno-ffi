@@ -1,3 +1,4 @@
 export enum FFI_OPS {
   DENO_FFI_OPEN = "DENO_FFI_OPEN",
+  DENO_FFI_CALL = "DENO_FFI_CALL",
 }

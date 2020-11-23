@@ -2,7 +2,7 @@ import { initPlugin, loadLibrary } from "../mod.ts";
 import { buildPlugin, buildTestLib } from "./build.ts";
 import { exists } from "./test.deps.ts";
 
-import { setPluginUrl } from "../ts/util.ts";
+import { closePlugin, setPluginUrl } from "../ts/util.ts";
 
 await buildPlugin();
 await buildTestLib();
@@ -15,6 +15,16 @@ if (await exists(".deno_plugins")) {
 }
 
 test("testOpen", async () => {
-  const lib = await loadLibrary("../", []);
-  // assertEquals(result, { success: true });
+  const lib = await loadLibrary<{
+    rust_fun_print_something(): void;
+  }>("./tests/target/release/libtests.dylib", [
+    {
+      name: "rust_fun_print_something",
+      type: "function",
+    },
+  ]);
+
+  lib.api.rust_fun_print_something();
+
+  closePlugin();
 });

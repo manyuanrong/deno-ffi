@@ -4,14 +4,11 @@ import { FFI_OPS } from "./types.ts";
 // @ts-ignore
 export const DenoCore = Deno.core as {
   ops: () => { [key: string]: number };
-  dispatch(
-    rid: number,
-    ...buf: ArrayBufferView[]
-  ): Uint8Array | undefined;
+  dispatch(rid: number, ...buf: ArrayBufferView[]): Uint8Array | undefined;
 };
 
 const PLUGIN_NAME = "deno_ffi";
-let initialized = false;
+let pluginId = 0;
 let pluginUrl = "";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -22,7 +19,7 @@ export function setPluginUrl(url: string) {
 
 export async function initPlugin() {
   const releaseUrl = pluginUrl;
-  if (!initialized) {
+  if (!pluginId) {
     const options = {
       name: PLUGIN_NAME,
       urls: {
@@ -31,11 +28,18 @@ export async function initPlugin() {
         linux: `${releaseUrl}/lib${PLUGIN_NAME}.so`,
       },
     };
-    await prepare(options);
+    pluginId = await prepare(options);
   }
 }
 
-export async function dispatch(op: FFI_OPS, ...data: Uint8Array[]) {
+export function closePlugin() {
+  if (pluginId) {
+    Deno.close(pluginId);
+    pluginId = 0;
+  }
+}
+
+export function dispatch(op: FFI_OPS, ...data: Uint8Array[]) {
   const ops = DenoCore.ops() as { [key in keyof typeof FFI_OPS]: number };
   const result = DenoCore.dispatch(ops[op], ...data);
   return result;
