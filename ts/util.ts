@@ -44,11 +44,3 @@ export function dispatch(op: FFI_OPS, ...data: Uint8Array[]) {
   const result = DenoCore.dispatch(ops[op], ...data);
   return result;
 }
-
-export function encodeString(str: string): Uint8Array {
-  return encoder.encode(str);
-}
-
-export function decodeString(buf: Uint8Array): string {
-  return decoder.decode(buf);
-}

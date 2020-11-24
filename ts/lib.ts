@@ -1,5 +1,6 @@
+import { convertValue, parseValue } from "./convert.ts";
 import { FFI_OPS } from "./types.ts";
-import { dispatch, encodeString, initPlugin } from "./util.ts";
+import { dispatch, initPlugin } from "./util.ts";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -26,7 +27,7 @@ function call(id: number, define: ApiDefine, params: any[]) {
         params: define.params?.map((type, index) => {
           return {
             data_type: type,
-            value: params[index],
+            value: convertValue(params[index], type),
           };
         }) ?? [],
         return_type: define.returnType,
@@ -37,7 +38,7 @@ function call(id: number, define: ApiDefine, params: any[]) {
   if (error) {
     throw new Error(error);
   }
-  return value;
+  return parseValue(value, define.returnType);
 }
 
 function unload(id: number) {
@@ -49,7 +50,7 @@ function unload(id: number) {
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   await initPlugin();
-  const buf = dispatch(FFI_OPS.DENO_FFI_OPEN, encodeString(file))!;
+  const buf = dispatch(FFI_OPS.DENO_FFI_OPEN, encoder.encode(file))!;
   const view = new DataView(buf.buffer);
   const id = view.getUint32(0, true);
 

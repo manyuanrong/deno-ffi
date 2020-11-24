@@ -165,14 +165,14 @@ fn get_param(params: &[CallParam], index: usize) -> RP {
 
 fn convert_data_type(value: &Value, data_type: &DataType) -> RP {
     match data_type {
-        DataType::I32 => value.as_i64().unwrap() as i32 as RP,
-        DataType::I64 => value.as_i64().unwrap() as RP,
+        DataType::I32 => value.as_str().unwrap().parse::<i32>().unwrap() as RP,
+        DataType::I64 => value.as_str().unwrap().parse::<i64>().unwrap() as RP,
     }
 }
 
 fn convert_return_value(raw: RP, data_type: &DataType) -> Value {
     match data_type {
         DataType::I32 => json!(raw as i32),
-        DataType::I64 => json!(raw as i64),
+        DataType::I64 => json!((raw as i64).to_string()),
     }
 }
