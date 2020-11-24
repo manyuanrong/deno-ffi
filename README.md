@@ -16,6 +16,8 @@ It also simplifies the augmentation of Deno with C code as it takes care of hand
 ```ts
 import { ApiDefine, DataType, loadLibrary } from "https://deno.land/x/ffi@v0.1.0/mod.ts";
 
+const libPath = "test.dylib";
+
 interface LibApi {
   rust_fun_print_something(): void;
   rust_fun_add_one(num: number): number;
