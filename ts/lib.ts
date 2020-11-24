@@ -28,15 +28,23 @@ function call(id: number, define: ApiDefine, params: any[]) {
             data_type: type,
             value: params[index],
           };
-        }),
+        }) ?? [],
         return_type: define.returnType,
       }),
     ),
-  );
-  if (buffer) {
-    const json = JSON.parse(decoder.decode(buffer));
-    return json;
+  )!;
+  const { error, value } = JSON.parse(decoder.decode(buffer));
+  if (error) {
+    throw new Error(error);
   }
+  return value;
+}
+
+function unload(id: number) {
+  dispatch(
+    FFI_OPS.DENO_FFI_UNLOAD,
+    encoder.encode(JSON.stringify(id)),
+  );
 }
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
@@ -53,6 +61,6 @@ export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   });
   return {
     api: apis as T,
-    close() {},
+    unload: () => unload(id),
   };
 }

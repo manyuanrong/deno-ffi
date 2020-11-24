@@ -5,7 +5,7 @@ import { pluginInit } from "./util.ts";
 const libPath = await pluginInit();
 interface LibApi {
   rust_fun_print_something(): void;
-  rust_fun_add_one(num: number): number;
+  rust_fun_add_one_i32(num: number): number;
 }
 
 const apiDefine: ApiDefine[] = [
@@ -14,7 +14,7 @@ const apiDefine: ApiDefine[] = [
     type: "function",
   },
   {
-    name: "rust_fun_add_one",
+    name: "rust_fun_add_one_i32",
     type: "function",
     params: [DataType.i32],
     returnType: DataType.i32,
@@ -33,7 +33,15 @@ test("rust_fun_print_something", (lib) => {
   lib.rust_fun_print_something();
 });
 
-test("rust_fun_add_one", (lib) => {
-  const value = lib.rust_fun_add_one(1);
-  assertEquals(value, 2);
+test("rust_fun_add_one_i32", (lib) => {
+  // normal
+  assertEquals(lib.rust_fun_add_one_i32(1), 2);
+  assertEquals(lib.rust_fun_add_one_i32(2147483646), 2147483647);
+
+  // overflow
+  assertEquals(lib.rust_fun_add_one_i32(2147483647), -2147483648);
+});
+
+test("unload", () => {
+  lib.unload();
 });

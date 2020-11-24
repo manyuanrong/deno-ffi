@@ -9,8 +9,23 @@ pub fn rust_fun_print_something() {
 }
 
 #[no_mangle]
-pub fn rust_fun_add_one(arg: i32) -> i32 {
+pub fn rust_fun_add_one_i32(arg: i32) -> i32 {
     arg + 1
+}
+
+#[no_mangle]
+pub fn rust_fun_add_one_i64(arg: i64) -> i64 {
+    arg + 1
+}
+
+#[no_mangle]
+pub fn rust_fun_add_one_f32(arg: f32) -> f32 {
+    arg + 1.0
+}
+
+#[no_mangle]
+pub fn rust_fun_add_one_f64(arg: f64) -> f64 {
+    arg + 1.0
 }
 
 #[no_mangle]

@@ -2,7 +2,7 @@
 Deno Foreign Function Interface
 
 [![tag](https://img.shields.io/github/tag/manyuanrong/deno-ffi.svg)](https://github.com/manyuanrong/deno-ffi/releases)
-[![Build Status](https://github.com/manyuanrong/deno-ffi/workflows/ci/badge.svg?branch=master)](https://github.com/manyuanrong/deno-ffi/actions)
+[![Build Status](https://github.com/manyuanrong/deno-ffi/workflows/ci/badge.svg?branch=main)](https://github.com/manyuanrong/deno-ffi/actions)
 [![license](https://img.shields.io/github/license/manyuanrong/deno-ffi.svg)](https://github.com/manyuanrong/deno-ffi)
 [![downloads](https://img.shields.io/github/downloads/manyuanrong/deno-ffi/total)](https://github.com/manyuanrong/deno-ffi)
 [![tag](https://img.shields.io/badge/deno-v1.5.2-green.svg)](https://github.com/denoland/deno)

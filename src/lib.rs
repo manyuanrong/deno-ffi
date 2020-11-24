@@ -20,6 +20,7 @@ type RP = *mut ();
 #[derive(Deserialize, Debug)]
 enum DataType {
     I32,
+    I64,
 }
 
 #[derive(Deserialize, Debug)]
@@ -33,13 +34,14 @@ pub struct CallArgs {
     id: u32,
     name: String,
     return_type: Option<DataType>,
-    params: Option<Vec<CallParam>>,
+    params: Vec<CallParam>,
 }
 
 #[no_mangle]
 pub fn deno_plugin_init(interface: &mut dyn Interface) {
     interface.register_op("DENO_FFI_OPEN", op_open);
     interface.register_op("DENO_FFI_CALL", op_call);
+    interface.register_op("DENO_FFI_UNLOAD", op_unload);
 }
 
 fn op_open(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op {
@@ -59,31 +61,95 @@ fn op_open(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
 fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op {
     let json_bytes = zero_copy.get(0).unwrap();
     let args: CallArgs = serde_json::from_slice(json_bytes).unwrap();
-    let result: Vec<u8> = LIBS_MAP.with(|cell| {
+
+    let result: Result<RP, String> = LIBS_MAP.with(|cell| {
         let libs = cell.borrow();
-        let lib = libs.get(&args.id).unwrap();
-        let return_value;
-        match &args.params {
-            None => {
-                let api: fn() -> *mut () = unsafe { lib.symbol(&args.name) }.unwrap();
-                return_value = api();
-            }
-            Some(params) => match params.len() {
-                1 => {
-                    let api: fn(RP) -> RP = unsafe { lib.symbol(&args.name) }.unwrap();
-                    return_value = api(get_param(params, 0));
-                }
-                _ => panic!("Not supported"),
-            },
-        }
-        if let Some(return_type) = args.return_type {
-            let value = convert_return_value(return_value, &return_type);
-            value.to_string().as_bytes().to_vec()
-        } else {
-            vec![]
-        }
+        let lib = libs.get(&args.id).ok_or("lib is not loaded or closed")?;
+        call_lib_api(lib, &args.name, &args.params)
     });
-    Op::Sync(result.into_boxed_slice())
+
+    let return_json: Value = match result {
+        Err(msg) => json!({
+            "error": msg,
+            "value": null,
+        }),
+        Ok(return_value) => {
+            let value = match args.return_type {
+                Some(return_type) => convert_return_value(return_value, &return_type),
+                None => json!(null),
+            };
+            json!({
+                "error": null,
+                "value": value,
+            })
+        }
+    };
+
+    return Op::Sync(
+        return_json
+            .to_string()
+            .as_bytes()
+            .to_vec()
+            .into_boxed_slice(),
+    );
+}
+
+fn op_unload(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op {
+    let json_bytes = zero_copy.get(0).unwrap();
+    let json: Value = serde_json::from_slice(json_bytes).unwrap();
+    let instance_id: u32 = json.as_i64().unwrap() as u32;
+    LIBS_MAP.with(|cell| cell.borrow_mut().remove(&instance_id));
+    Op::Sync(Box::new([]))
+}
+
+fn call_lib_api(lib: &Library, name: &str, params: &[CallParam]) -> Result<RP, String> {
+    // TODO Use macro_rules to simplify
+    match params.len() {
+        0 => {
+            let api: fn() -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api())
+        }
+        1 => {
+            let api: fn(RP) -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(get_param(params, 0)))
+        }
+        2 => {
+            let api: fn(RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(get_param(params, 0), get_param(params, 1)))
+        }
+        3 => {
+            let api: fn(RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+            ))
+        }
+        4 => {
+            let api: fn(RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+            ))
+        }
+        5 => {
+            let api: fn(RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+            ))
+        }
+        _ => Err("Not supported params size".to_string()),
+    }
 }
 
 fn get_param(params: &[CallParam], index: usize) -> RP {
@@ -99,18 +165,14 @@ fn get_param(params: &[CallParam], index: usize) -> RP {
 
 fn convert_data_type(value: &Value, data_type: &DataType) -> RP {
     match data_type {
-        DataType::I32 => {
-            let v: i32 = value.as_i64().unwrap() as i32;
-            v as *mut ()
-        }
+        DataType::I32 => value.as_i64().unwrap() as i32 as RP,
+        DataType::I64 => value.as_i64().unwrap() as RP,
     }
 }
 
-fn convert_return_value(raw: *mut (), data_type: &DataType) -> Value {
+fn convert_return_value(raw: RP, data_type: &DataType) -> Value {
     match data_type {
-        DataType::I32 => {
-            let v: i32 = raw as i32;
-            json!(v)
-        }
+        DataType::I32 => json!(raw as i32),
+        DataType::I64 => json!(raw as i64),
     }
 }
