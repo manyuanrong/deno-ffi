@@ -85,13 +85,13 @@ fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
         }
     };
 
-    return Op::Sync(
+    Op::Sync(
         return_json
             .to_string()
             .as_bytes()
             .to_vec()
             .into_boxed_slice(),
-    );
+    )
 }
 
 fn op_unload(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op {
