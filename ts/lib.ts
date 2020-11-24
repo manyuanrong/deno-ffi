@@ -4,7 +4,7 @@ import { dispatch, encodeString, initPlugin } from "./util.ts";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-interface ApiDefine {
+export interface ApiDefine {
   name: string;
   type: "function" | "variable";
   params?: DataType[];
@@ -33,8 +33,10 @@ function call(id: number, define: ApiDefine, params: any[]) {
       }),
     ),
   );
-  const json = JSON.parse(decoder.decode(buffer));
-  console.log(json);
+  if (buffer) {
+    const json = JSON.parse(decoder.decode(buffer));
+    return json;
+  }
 }
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
@@ -46,7 +48,7 @@ export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   const apis: { [key: string]: any } = {};
   define.forEach((def) => {
     apis[def.name] = (...args: any[]) => {
-      call(id, def, args);
+      return call(id, def, args);
     };
   });
   return {

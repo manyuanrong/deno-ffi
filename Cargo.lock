@@ -36,7 +36,6 @@ version = "0.1.0"
 dependencies = [
  "deno_core",
  "dlopen",
- "lazy_static",
  "libc",
  "serde",
 ]

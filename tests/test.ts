@@ -1,33 +1,14 @@
-import { loadLibrary } from "../mod.ts";
-import { DataType } from "../ts/lib.ts";
-import { setPluginUrl } from "../ts/util.ts";
-import { buildPlugin, buildTestLib } from "./build.ts";
-import { exists } from "./test.deps.ts";
+import { assertEquals } from "https://deno.land/std@0.74.0/testing/asserts.ts";
+import { ApiDefine, DataType, loadLibrary } from "../mod.ts";
+import { pluginInit } from "./util.ts";
 
-await buildPlugin();
-await buildTestLib();
-
-setPluginUrl("file://target/release");
-let testLibPath = "";
-
-if (Deno.build.os === "windows") {
-  testLibPath = "./tests/target/release/tests.dll";
-} else if (Deno.build.os === "linux") {
-  testLibPath = "./tests/target/release/libtests.so";
-} else {
-  testLibPath = "./tests/target/release/libtests.dylib";
-}
-
-if (await exists(".deno_plugins")) {
-  await Deno.remove(".deno_plugins", { recursive: true });
-}
-
+const libPath = await pluginInit();
 interface LibApi {
   rust_fun_print_something(): void;
   rust_fun_add_one(num: number): number;
 }
 
-const lib = await loadLibrary<LibApi>(testLibPath, [
+const apiDefine: ApiDefine[] = [
   {
     name: "rust_fun_print_something",
     type: "function",
@@ -38,7 +19,9 @@ const lib = await loadLibrary<LibApi>(testLibPath, [
     params: [DataType.i32],
     returnType: DataType.i32,
   },
-]);
+];
+
+const lib = await loadLibrary<LibApi>(libPath, apiDefine);
 
 async function test(name: string, fn: (lib: LibApi) => void) {
   Deno.test(name, async () => {
@@ -51,5 +34,6 @@ test("rust_fun_print_something", (lib) => {
 });
 
 test("rust_fun_add_one", (lib) => {
-  lib.rust_fun_add_one(1);
+  const value = lib.rust_fun_add_one(1);
+  assertEquals(value, 2);
 });

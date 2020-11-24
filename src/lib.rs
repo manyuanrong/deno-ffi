@@ -7,7 +7,6 @@ use deno_core::{
 };
 use deno_core::{serde_json, serde_json::Value};
 use dlopen::raw::Library;
-use libc::c_int;
 use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap};
 
@@ -73,9 +72,6 @@ fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
                 1 => {
                     let api: fn(RP) -> RP = unsafe { lib.symbol(&args.name) }.unwrap();
                     return_value = api(get_param(params, 0));
-                    let a: i32 = return_value as i32;
-                    println!("{:?}", a);
-                    // result
                 }
                 _ => panic!("Not supported"),
             },
@@ -90,13 +86,13 @@ fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
     Op::Sync(result.into_boxed_slice())
 }
 
-fn get_param(params: &Vec<CallParam>, index: usize) -> RP {
+fn get_param(params: &[CallParam], index: usize) -> RP {
     let param = params.get(index);
     match param {
-        None => 0 as *mut (),
+        None => std::ptr::null_mut(),
         Some(param) => match &param.value {
             Some(value) => convert_data_type(value, &param.data_type),
-            None => 0 as *mut (),
+            None => std::ptr::null_mut(),
         },
     }
 }

@@ -11,6 +11,5 @@ crate-type = ["cdylib"]
 [dependencies]
 dlopen = "0.1.8"
 deno_core = "0.68.0"
-lazy_static = "1.4.0"
 serde = "1.0.117"
 libc = "0.2.80"
