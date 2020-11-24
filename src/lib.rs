@@ -1,7 +1,10 @@
 extern crate deno_core;
 extern crate dlopen;
 
-use deno_core::plugin_api::{Interface, Op, ZeroCopyBuf};
+use deno_core::{
+    plugin_api::{Interface, Op, ZeroCopyBuf},
+    serde_json::json,
+};
 use deno_core::{serde_json, serde_json::Value};
 use dlopen::raw::Library;
 use libc::c_int;
@@ -108,5 +111,10 @@ fn convert_data_type(value: &Value, data_type: &DataType) -> RP {
 }
 
 fn convert_return_value(raw: *mut (), data_type: &DataType) -> Value {
-    Value::Null
+    match data_type {
+        DataType::I32 => {
+            let v: i32 = raw as i32;
+            json!(v)
+        }
+    }
 }

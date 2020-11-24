@@ -33,6 +33,8 @@ function call(id: number, define: ApiDefine, params: any[]) {
       }),
     ),
   );
+  const json = JSON.parse(decoder.decode(buffer));
+  console.log(json);
 }
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
