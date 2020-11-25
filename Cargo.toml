@@ -6,6 +6,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
+proc-macro = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
@@ -13,3 +14,4 @@ dlopen = "0.1.8"
 deno_core = "0.68.0"
 serde = "1.0.117"
 libc = "0.2.80"
+proc_macros = { path = "proc_macros/" }

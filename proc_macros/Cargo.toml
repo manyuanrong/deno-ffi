@@ -1,0 +1,11 @@
+[package]
+name = "proc_macros"
+version = "0.1.0"
+authors = ["Kevin (Kun) Kassimo Qian <kevinkassimo@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = [ "proc-macro" ]
+
+[dependencies]
+syn = "1.0.51"
