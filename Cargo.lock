@@ -37,15 +37,14 @@ dependencies = [
  "deno_core",
  "dlopen",
  "libc",
- "proc_macros",
  "serde",
 ]
 
 [[package]]
 name = "deno_core"
-version = "0.68.0"
+version = "0.69.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e833508026918dc916758a46905d2ddd8ad0ff4bad2c56c1387ad9682281f3a"
+checksum = "548a5b3f73cc2880fe504e36b89f672206373cdc5b592698d93d10e187ba4d53"
 dependencies = [
  "anyhow",
  "futures",
@@ -323,13 +322,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc_macros"
-version = "0.1.0"
-dependencies = [
- "syn 1.0.51",
-]
-
-[[package]]
 name = "quote"
 version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -349,9 +341,9 @@ dependencies = [
 
 [[package]]
 name = "rusty_v8"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "692dddfb8ae9915b19774a05cadc71363c98bad4fafc13636579da5a7a110016"
+checksum = "abf06ea79ead18b3f81707b78e6d7813e83c772d0cb4b43caf3fa35a5df7eaab"
 dependencies = [
  "bitflags",
  "cargo_gn",

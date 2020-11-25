@@ -10,8 +10,6 @@ use dlopen::raw::Library;
 use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap};
 
-use proc_macros::api_call;
-
 thread_local! {
     static LIBS_INDEX: RefCell<u32> = RefCell::new(1);
     static LIBS_MAP: RefCell<HashMap<u32, Library>> = RefCell::new(HashMap::new());
@@ -108,43 +106,152 @@ fn call_lib_api(lib: &Library, name: &str, params: &[CallParam]) -> Result<RP, S
     // TODO Use macro_rules to simplify
     match params.len() {
         0 => {
-            api_call! { 0 }
+            let api: fn() -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api())
         }
         1 => {
-            api_call! { 1 }
+            let api: fn(RP) -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(get_param(params, 0)))
         }
         2 => {
-            api_call! { 2 }
+            let api: fn(RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(get_param(params, 0), get_param(params, 1)))
         }
         3 => {
-            api_call! { 3 }
+            let api: fn(RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+            ))
         }
         4 => {
-            api_call! { 4 }
+            let api: fn(RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+            ))
         }
         5 => {
-            api_call! { 5 }
+            let api: fn(RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+            ))
         }
         6 => {
-            api_call! { 6 }
+            let api: fn(RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+            ))
         }
         7 => {
-            api_call! { 7 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+            ))
         }
         8 => {
-            api_call! { 8 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+                get_param(params, 7),
+            ))
         }
         9 => {
-            api_call! { 9 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+                get_param(params, 7),
+                get_param(params, 8),
+            ))
         }
         10 => {
-            api_call! { 10 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+                get_param(params, 7),
+                get_param(params, 8),
+                get_param(params, 9),
+            ))
         }
         11 => {
-            api_call! { 11 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+                get_param(params, 7),
+                get_param(params, 8),
+                get_param(params, 9),
+                get_param(params, 10),
+            ))
         }
         12 => {
-            api_call! { 12 }
+            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
+                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+            Ok(api(
+                get_param(params, 0),
+                get_param(params, 1),
+                get_param(params, 2),
+                get_param(params, 3),
+                get_param(params, 4),
+                get_param(params, 5),
+                get_param(params, 6),
+                get_param(params, 7),
+                get_param(params, 8),
+                get_param(params, 9),
+                get_param(params, 10),
+                get_param(params, 11),
+            ))
         }
         _ => Err("Not supported params size".to_string()),
     }
