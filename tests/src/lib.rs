@@ -29,6 +29,24 @@ pub fn rust_fun_add_one_f64(arg: f64) -> f64 {
 }
 
 #[no_mangle]
+pub fn rust_fun_add_all_12_i32(
+    a1: i32,
+    a2: i32,
+    a3: i32,
+    a4: i32,
+    a5: i32,
+    a6: i32,
+    a7: i32,
+    a8: i32,
+    a9: i32,
+    a10: i32,
+    a11: i32,
+    a12: i32,
+) -> i32 {
+    a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
+}
+
+#[no_mangle]
 pub extern "C" fn c_fun_print_something_else() {
     println!("something else");
 }

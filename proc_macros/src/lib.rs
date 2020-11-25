@@ -3,14 +3,13 @@ use proc_macro::{Span, TokenStream, TokenTree};
 use std::iter;
 use syn;
 
-static TEMPLATE: &str = r#"
+static API_CALL_TEMPLATE: &str = r#"
 let api: fn($1) -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
 Ok(api($2))
 "#;
 
 fn error_stream(msg: &str) -> TokenStream {
     TokenStream::from(syn::Error::new(Span::call_site().into(), msg).to_compile_error())
-    // TokenStream::from(quote! { compile_error!(#msg) })
 }
 
 /// Expected usage:
@@ -41,6 +40,6 @@ pub fn api_call(item: TokenStream) -> TokenStream {
         api_argument_list.push(format!("get_param(params, {})", i));
     }
     let api_arguments_str = api_argument_list.join(", ");
-    let code = TEMPLATE.replace("$1", &api_params_str).replace("$2", &api_arguments_str);
+    let code = API_CALL_TEMPLATE.replace("$1", &api_params_str).replace("$2", &api_arguments_str);
     code.parse().unwrap()
 }
