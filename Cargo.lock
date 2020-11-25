@@ -42,9 +42,9 @@ dependencies = [
 
 [[package]]
 name = "deno_core"
-version = "0.69.0"
+version = "0.68.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "548a5b3f73cc2880fe504e36b89f672206373cdc5b592698d93d10e187ba4d53"
+checksum = "8e833508026918dc916758a46905d2ddd8ad0ff4bad2c56c1387ad9682281f3a"
 dependencies = [
  "anyhow",
  "futures",
@@ -341,9 +341,9 @@ dependencies = [
 
 [[package]]
 name = "rusty_v8"
-version = "0.13.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abf06ea79ead18b3f81707b78e6d7813e83c772d0cb4b43caf3fa35a5df7eaab"
+checksum = "692dddfb8ae9915b19774a05cadc71363c98bad4fafc13636579da5a7a110016"
 dependencies = [
  "bitflags",
  "cargo_gn",
