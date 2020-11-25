@@ -19,7 +19,7 @@ interface LibApi {
     num9: number,
     num10: number,
     num11: number,
-    num12: number
+    num12: number,
   ): number;
 }
 
@@ -55,7 +55,7 @@ const apiDefine: ApiDefine[] = [
       DataType.i32,
       DataType.i32,
       DataType.i32,
-      DataType.i32
+      DataType.i32,
     ],
     returnType: DataType.i32,
   },
@@ -100,7 +100,10 @@ test("rust_fun_add_one_i64", (lib) => {
 
 test("rust_fun_add_12_inputs_i32", (lib) => {
   // normal
-  assertEquals(lib.rust_fun_add_all_12_i32(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), 78);
+  assertEquals(
+    lib.rust_fun_add_all_12_i32(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+    78,
+  );
 });
 
 test("unload", () => {

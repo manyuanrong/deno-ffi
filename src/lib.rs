@@ -107,19 +107,45 @@ fn op_unload(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> O
 fn call_lib_api(lib: &Library, name: &str, params: &[CallParam]) -> Result<RP, String> {
     // TODO Use macro_rules to simplify
     match params.len() {
-        0 => { api_call! { 0 } }
-        1 => { api_call! { 1 } }
-        2 => { api_call! { 2 } }
-        3 => { api_call! { 3 } }
-        4 => { api_call! { 4 } }
-        5 => { api_call! { 5 } }
-        6 => { api_call! { 6 } }
-        7 => { api_call! { 7 } }
-        8 => { api_call! { 8 } }
-        9 => { api_call! { 9 } }
-        10 => { api_call! { 10 } }
-        11 => { api_call! { 11 } }
-        12 => { api_call! { 12 } }
+        0 => {
+            api_call! { 0 }
+        }
+        1 => {
+            api_call! { 1 }
+        }
+        2 => {
+            api_call! { 2 }
+        }
+        3 => {
+            api_call! { 3 }
+        }
+        4 => {
+            api_call! { 4 }
+        }
+        5 => {
+            api_call! { 5 }
+        }
+        6 => {
+            api_call! { 6 }
+        }
+        7 => {
+            api_call! { 7 }
+        }
+        8 => {
+            api_call! { 8 }
+        }
+        9 => {
+            api_call! { 9 }
+        }
+        10 => {
+            api_call! { 10 }
+        }
+        11 => {
+            api_call! { 11 }
+        }
+        12 => {
+            api_call! { 12 }
+        }
         _ => Err("Not supported params size".to_string()),
     }
 }
