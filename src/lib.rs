@@ -102,8 +102,8 @@ fn op_unload(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> O
     Op::Sync(Box::new([]))
 }
 
+#[allow(clippy::type_complexity)]
 fn call_lib_api(lib: &Library, name: &str, params: &[CallParam]) -> Result<RP, String> {
-    // TODO Use macro_rules to simplify
     match params.len() {
         0 => {
             let api: fn() -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
