@@ -1,7 +1,6 @@
 extern crate proc_macro;
 use proc_macro::{Span, TokenStream, TokenTree};
 use std::iter;
-use syn;
 
 static API_CALL_TEMPLATE: &str = r#"
 let api: fn($1) -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
@@ -34,12 +33,17 @@ pub fn api_call(item: TokenStream) -> TokenStream {
         }
     };
 
-    let api_params_str = iter::repeat("RP").take(count).collect::<Vec<_>>().join(", ");
+    let api_params_str = iter::repeat("RP")
+        .take(count)
+        .collect::<Vec<_>>()
+        .join(", ");
     let mut api_argument_list: Vec<String> = Vec::new();
     for i in 0..count {
         api_argument_list.push(format!("get_param(params, {})", i));
     }
     let api_arguments_str = api_argument_list.join(", ");
-    let code = API_CALL_TEMPLATE.replace("$1", &api_params_str).replace("$2", &api_arguments_str);
+    let code = API_CALL_TEMPLATE
+        .replace("$1", &api_params_str)
+        .replace("$2", &api_arguments_str);
     code.parse().unwrap()
 }
