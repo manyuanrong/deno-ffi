@@ -21,6 +21,9 @@ interface LibApi {
     num11: number,
     num12: number,
   ): number;
+  rust_fun_add_one_f32(f: number): number;
+  rust_fun_concat_str(str: string): string;
+  rust_fun_free(ptr: any): void;
 }
 
 const apiDefine: ApiDefine[] = [
@@ -59,6 +62,19 @@ const apiDefine: ApiDefine[] = [
     ],
     returnType: DataType.i32,
   },
+  {
+    name: "rust_fun_concat_str",
+    type: "function",
+    params: [DataType.cstr],
+    returnType: DataType.cstr,
+  },
+  { name: "rust_fun_free", type: "function" },
+  {
+    name: "rust_fun_add_one_f32",
+    type: "function",
+    params: [DataType.f32],
+    returnType: DataType.f32,
+  },
 ];
 
 const lib = await loadLibrary<LibApi>(libPath, apiDefine);
@@ -88,7 +104,7 @@ test("rust_fun_add_one_i64", (lib) => {
   assertEquals(lib.rust_fun_add_one_i64(2147483648n), 2147483649n);
   assertEquals(
     lib.rust_fun_add_one_i64(-9223372036854775808n),
-    -9223372036854775807n,
+    -9223372036854775808n,
   );
 
   // overflow
@@ -105,6 +121,22 @@ test("rust_fun_add_12_inputs_i32", (lib) => {
     78,
   );
 });
+
+test("rust_fun_add_one_f32", (lib) => {
+  // assertEquals(
+  const a = lib.rust_fun_add_one_f32(1.0);
+  // 1.0,
+  // );
+  console.log(a);
+});
+
+// test("rust_fun_concat_str", (lib) => {
+//   // normal
+//   assertEquals(
+//     lib.rust_fun_concat_str(" World"),
+//     "Hello World",
+//   );
+// });
 
 test("unload", () => {
   lib.unload();

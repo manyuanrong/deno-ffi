@@ -1,5 +1,6 @@
 extern crate deno_core;
 extern crate dlopen;
+extern crate libffi;
 
 use deno_core::{
     plugin_api::{Interface, Op, ZeroCopyBuf},
@@ -7,6 +8,7 @@ use deno_core::{
 };
 use deno_core::{serde_json, serde_json::Value};
 use dlopen::raw::Library;
+use libffi::high as ffi;
 use serde::Deserialize;
 use std::{cell::RefCell, collections::HashMap};
 
@@ -15,31 +17,30 @@ thread_local! {
     static LIBS_MAP: RefCell<HashMap<u32, Library>> = RefCell::new(HashMap::new());
 }
 
-type RP = *mut ();
-
-#[derive(Deserialize, Debug)]
-enum DataType {
-    I32,
-    I64,
-}
-
 #[derive(Deserialize, Debug)]
 struct CallParam {
-    data_type: DataType,
-    value: Option<Value>,
+    data_type: String,
+    value: Value,
+}
+
+enum ArgValue {
+    I32(i32),
+    I64(i64),
+    F32(f32),
+    Void,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct CallArgs {
     id: u32,
     name: String,
-    return_type: Option<DataType>,
+    return_type: String,
     params: Vec<CallParam>,
 }
 
 #[no_mangle]
 pub fn deno_plugin_init(interface: &mut dyn Interface) {
-    interface.register_op("DENO_FFI_OPEN", op_open);
+    interface.register_op("DENO_FFI_LOAD", op_open);
     interface.register_op("DENO_FFI_CALL", op_call);
     interface.register_op("DENO_FFI_UNLOAD", op_unload);
 }
@@ -62,10 +63,10 @@ fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
     let json_bytes = zero_copy.get(0).unwrap();
     let args: CallArgs = serde_json::from_slice(json_bytes).unwrap();
 
-    let result: Result<RP, String> = LIBS_MAP.with(|cell| {
+    let result: Result<Value, String> = LIBS_MAP.with(|cell| {
         let libs = cell.borrow();
         let lib = libs.get(&args.id).ok_or("lib is not loaded or closed")?;
-        call_lib_api(lib, &args.name, &args.params)
+        call_lib_api(lib, &args.name, &args.params, args.return_type)
     });
 
     let return_json: Value = match result {
@@ -74,13 +75,9 @@ fn op_call(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> Op 
             "value": null,
         }),
         Ok(return_value) => {
-            let value = match args.return_type {
-                Some(return_type) => convert_return_value(return_value, &return_type),
-                None => json!(null),
-            };
             json!({
                 "error": null,
-                "value": value,
+                "value": return_value,
             })
         }
     };
@@ -103,181 +100,42 @@ fn op_unload(_interface: &mut dyn Interface, zero_copy: &mut [ZeroCopyBuf]) -> O
 }
 
 #[allow(clippy::type_complexity)]
-fn call_lib_api(lib: &Library, name: &str, params: &[CallParam]) -> Result<RP, String> {
-    match params.len() {
-        0 => {
-            let api: fn() -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api())
-        }
-        1 => {
-            let api: fn(RP) -> RP = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(get_param(params, 0)))
-        }
-        2 => {
-            let api: fn(RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(get_param(params, 0), get_param(params, 1)))
-        }
-        3 => {
-            let api: fn(RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-            ))
-        }
-        4 => {
-            let api: fn(RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-            ))
-        }
-        5 => {
-            let api: fn(RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-            ))
-        }
-        6 => {
-            let api: fn(RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-            ))
-        }
-        7 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-            ))
-        }
-        8 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-                get_param(params, 7),
-            ))
-        }
-        9 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-                get_param(params, 7),
-                get_param(params, 8),
-            ))
-        }
-        10 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-                get_param(params, 7),
-                get_param(params, 8),
-                get_param(params, 9),
-            ))
-        }
-        11 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-                get_param(params, 7),
-                get_param(params, 8),
-                get_param(params, 9),
-                get_param(params, 10),
-            ))
-        }
-        12 => {
-            let api: fn(RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP, RP) -> RP =
-                unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
-            Ok(api(
-                get_param(params, 0),
-                get_param(params, 1),
-                get_param(params, 2),
-                get_param(params, 3),
-                get_param(params, 4),
-                get_param(params, 5),
-                get_param(params, 6),
-                get_param(params, 7),
-                get_param(params, 8),
-                get_param(params, 9),
-                get_param(params, 10),
-                get_param(params, 11),
-            ))
-        }
-        _ => Err("Not supported params size".to_string()),
-    }
-}
+fn call_lib_api(
+    lib: &Library,
+    name: &str,
+    params: &[CallParam],
+    return_type: String,
+) -> Result<Value, String> {
+    let fn_ptr = unsafe { lib.symbol(name) }.map_err(|err| err.to_string())?;
+    let fn_code_ptr = ffi::CodePtr::from_ptr(fn_ptr);
+    let args: Vec<ArgValue> = params
+        .iter()
+        .map(|param| match param.data_type.as_str() {
+            "i32" => ArgValue::I32(param.value.as_i64().unwrap() as i32),
+            "i64" => ArgValue::I64(param.value.as_str().unwrap().parse::<i64>().unwrap()),
+            _ => ArgValue::Void,
+        })
+        .collect();
 
-fn get_param(params: &[CallParam], index: usize) -> RP {
-    let param = params.get(index);
-    match param {
-        None => std::ptr::null_mut(),
-        Some(param) => match &param.value {
-            Some(value) => convert_data_type(value, &param.data_type),
-            None => std::ptr::null_mut(),
-        },
-    }
-}
+    let args: Vec<ffi::Arg> = args
+        .iter()
+        .map(|value| match value {
+            ArgValue::I32(v) => ffi::arg(v),
+            ArgValue::F32(v) => ffi::arg(v),
+            ArgValue::I64(v) => ffi::arg(v),
+            ArgValue::Void => ffi::arg(&()),
+        })
+        .collect();
 
-fn convert_data_type(value: &Value, data_type: &DataType) -> RP {
-    match data_type {
-        DataType::I32 => value.as_str().unwrap().parse::<i32>().unwrap() as RP,
-        DataType::I64 => value.as_str().unwrap().parse::<i64>().unwrap() as RP,
-    }
-}
+    let ret = match return_type.as_str() {
+        "i32" => {
+            json!(unsafe { ffi::call::<i32>(fn_code_ptr, args.as_slice()) })
+        }
+        "i64" => {
+            json!(unsafe { ffi::call::<i64>(fn_code_ptr, args.as_slice()) })
+        }
+        _ => json!(null),
+    };
 
-fn convert_return_value(raw: RP, data_type: &DataType) -> Value {
-    match data_type {
-        DataType::I32 => json!(raw as i32),
-        DataType::I64 => json!((raw as i64).to_string()),
-    }
+    Ok(ret)
 }

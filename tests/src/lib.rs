@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
 extern crate libc;
 use libc::{c_char, c_int};
+use std::ffi::CString;
 
 //FUNCTIONS
 #[no_mangle]
@@ -44,6 +45,28 @@ pub fn rust_fun_add_all_12_i32(
     a12: i32,
 ) -> i32 {
     a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
+}
+
+#[no_mangle]
+pub fn rust_fun_concat_str(ptr: *mut c_char) -> *const c_char {
+    let str = unsafe {
+        assert!(!ptr.is_null());
+        CString::from_raw(ptr)
+    };
+    let str = str.to_str().unwrap();
+    let str = format!("{}{}", "Hello", str);
+    println!("newStr:{}", str);
+    let str = CString::new(str).unwrap();
+    let str_ptr = str.as_ptr();
+    std::mem::forget(str);
+    str_ptr
+}
+
+#[no_mangle]
+pub fn rust_fun_free(ptr: *mut ()) {
+    unsafe {
+        let _ = Box::from_raw(ptr);
+    }
 }
 
 #[no_mangle]

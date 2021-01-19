@@ -13,8 +13,11 @@ export interface ApiDefine {
 }
 
 export enum DataType {
-  i32 = "I32",
-  i64 = "I64",
+  i32 = "i32",
+  i64 = "i64",
+  f32 = "f32",
+  cstr = "cstr",
+  void = "",
 }
 
 function call(id: number, define: ApiDefine, params: any[]) {
@@ -30,7 +33,7 @@ function call(id: number, define: ApiDefine, params: any[]) {
             value: convertValue(params[index], type),
           };
         }) ?? [],
-        return_type: define.returnType,
+        return_type: define.returnType || DataType.void,
       }),
     ),
   )!;
@@ -50,7 +53,7 @@ function unload(id: number) {
 
 export async function loadLibrary<T = any>(file: string, define: ApiDefine[]) {
   await initPlugin();
-  const buf = dispatch(FFI_OPS.DENO_FFI_OPEN, encoder.encode(file))!;
+  const buf = dispatch(FFI_OPS.DENO_FFI_LOAD, encoder.encode(file))!;
   const view = new DataView(buf.buffer);
   const id = view.getUint32(0, true);
 

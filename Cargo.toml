@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 dlopen = "0.1.8"
-deno_core = "0.68.0"
+deno_core = "0.76.0"
 serde = "1.0.117"
 libc = "0.2.80"
+libffi = "1.0.0"
