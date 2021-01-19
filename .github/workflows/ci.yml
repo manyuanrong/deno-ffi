@@ -26,6 +26,11 @@ jobs:
         with:
           rust-version: 1.46.0
 
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          target: x86_64-unknown-linux-gnu
+
       - name: Install clippy and rustfmt
         run: |
           rustup component add clippy
