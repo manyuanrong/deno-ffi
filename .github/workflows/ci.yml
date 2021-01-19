@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         # os: [macOS-latest, windows-2019, ubuntu-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-2019]
 
     steps:
       - name: Setup Environment
@@ -27,25 +27,22 @@ jobs:
         with:
           rust-version: 1.46.0
 
-      - name: Install latest nightly
+      - name: Setup GNU (Linux)
         uses: actions-rs/toolchain@v1
+        if: startsWith(matrix.os, 'ubuntu')
         with:
           toolchain: stable
           target: x86_64-unknown-linux-gnu
-
-      - name: Install clippy and rustfmt
-        run: |
-          rustup component add clippy
-          rustup component add rustfmt
-
-      - name: Install Deno
-        uses: denolib/setup-deno@master
+          
+      - name: Setup GNU (Windows)
+        uses: actions-rs/toolchain@v1
+        if: startsWith(matrix.os, 'windows')
         with:
-          deno-version: 1.x.x
+          toolchain: stable
+          target: x86_64-pc-windows-gnu
 
       - name: Log versions
         run: |
-          deno --version
           rustc --version
           cargo --version
 
@@ -59,31 +56,6 @@ jobs:
           key: ${{ runner.os }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-
 
-      # Lint
-      - name: Clippy
-        run: cargo clippy --all-targets --release --locked -- -D clippy::all
-      - name: Format Rust
-        run: cargo fmt -- --check
-      - name: Format TS
-        run: deno fmt --check
-
       # Build
       - name: Build
         run: cargo build --release --locked --all-targets
-
-      # Tests
-      - name: Test Rust
-        run: cargo test --release --locked --all-targets
-      - name: Test TS
-        run: deno test -A --unstable
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            target/release/libdeno_ffi.dylib
-            target/release/libdeno_ffi.so
-            target/release/deno_ffi.dll
